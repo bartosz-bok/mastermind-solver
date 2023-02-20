@@ -1,9 +1,6 @@
 from utils import Host
 
-
-
 if __name__ == '__main__':
-
     print('Yo!\nWelcome to MasterMind game.')
 
     host = Host()
