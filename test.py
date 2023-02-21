@@ -83,3 +83,5 @@ while True:
     print(correct_combinations)
     print('ja proponuję: ')
     print(random.choice(correct_combinations))
+
+    print('siema')
