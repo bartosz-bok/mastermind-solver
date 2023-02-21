@@ -1,5 +1,7 @@
 from pawns import Table, Color
 
+import numpy as np
+import itertools
 
 def is_number(string):
     return all(char.isdigit() for char in string)
@@ -16,6 +18,7 @@ class Host(Game):
     def __init__(self):
         super().__init__()
         self.table = None
+        self.ComputerPlayer = None
         self.NUMBER_OF_ROUNDS = None
         self.NUMBER_OF_PAWNS = None
         self.NUMBER_OF_COLORS = None
@@ -52,8 +55,8 @@ class Host(Game):
     def choose_player(self):
         chosen_player = input('choose who is the player: ')
 
-        while chosen_player != 'human':
-            chosen_player = input('this is not human! choose another player: ')
+        while chosen_player != 'human' and chosen_player != 'computer':
+            chosen_player = input('this is not human or computer! choose another player: ')
 
         if chosen_player == 'human':
             self.show_pawns = input('print answer (yes/no): ')
@@ -65,6 +68,8 @@ class Host(Game):
                 self.show_pawns = True
             elif self.show_pawns == 'no':
                 self.show_pawns = False
+        elif chosen_player == 'computer':
+            self.init_computer_player()
 
         self.player = chosen_player
 
@@ -77,9 +82,9 @@ class Host(Game):
             if self.show_pawns:
                 self.table.print_pawns()
 
-        # TODO ogarnąć
+        # TODO trzeba ogarnąć?
         elif self.player == 'computer':
-            self.table.select_random_pawns_colors()
+            pass
 
     def play_game(self):
         for round_i in range(self.NUMBER_OF_ROUNDS):
@@ -88,12 +93,26 @@ class Host(Game):
                 looking_pawns = HumanPlayer.guess_color(round_i, self.NUMBER_OF_PAWNS,
                                                         self.NUMBER_OF_ROUNDS, self.color)
 
-            self.table.check_pawn_list(looking_pawns)
+                self.table.check_pawn_list(looking_pawns)
 
-            print(self.table.answers)
-            if self.table.answers.count('BLACK!') == self.NUMBER_OF_PAWNS:
-                print('YOU WIN! CONGRATULATIONS!')
-                break
+                print(self.table.answers)
+
+                if self.table.answers.count('BLACK!') == self.NUMBER_OF_PAWNS:
+                    print('YOU WIN! CONGRATULATIONS!')
+                    break
+
+            elif self.player == 'computer':
+                self.ComputerPlayer.print_all_possibilities()
+                looking_pawns = []
+
+
+
+
+
+
+    def init_computer_player(self):
+        self.ComputerPlayer = ComputerPlayer(self.NUMBER_OF_PAWNS, self.color.colors_list)
+
 
 
 class HumanPlayer:
@@ -117,6 +136,34 @@ class HumanPlayer:
         return looking_pawns
 
 
-class ComputerPlayer(Game):
-    def __init__(self):
-        super().__init__()
+class ComputerPlayer:
+    def __init__(self, number_of_pawns, colors):
+        self.history_of_guesses = None
+        self.history_of_answers = None
+        self.number_of_pawns = number_of_pawns
+        self.colors = colors
+        self.initial_possibilities = [p for p in itertools.product(self.colors, repeat=self.number_of_pawns)]
+        self.existing_possibilities = self.initial_possibilities
+
+    def print_initial_possibilities(self):
+        print(self.initial_possibilities)
+
+    def print_all_possibilities(self):
+        print(self.existing_possibilities)
+
+
+    def count_entrophy(self):
+        possible_answers = ['black','white',None]
+
+        combinated_possible_answers = [p for p in itertools.product(possible_answers, repeat=self.number_of_pawns)]
+
+        for existing_possibility_i in self.existing_possibilities:
+            for combinated_possible_answer_i in combinated_possible_answers:
+
+
+    def is_correct(self,possible,previous_answer, new_answer):
+
+
+
+    def update_possibilities(self, answers):
+        pass
