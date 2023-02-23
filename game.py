@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import itertools
 import math
+import random
 
 
 def is_number(string):
@@ -28,7 +29,7 @@ class Host(Game):
 
     def choose_color(self):
         while True:
-            chosen_color = input('choose color: ')
+            chosen_color = input('choose color (write \'stop\' if that\'s all): ')
 
             while not chosen_color.isalpha():
                 chosen_color = input('this word isn\'t alphabetical! choose another color: ')
@@ -56,7 +57,7 @@ class Host(Game):
         self.NUMBER_OF_ROUNDS = int(number)
 
     def choose_player(self):
-        chosen_player = input('choose who is the player: ')
+        chosen_player = input('choose who is the player (human/computer): ')
 
         while chosen_player != 'human' and chosen_player != 'computer':
             chosen_player = input('this is not human or computer! choose another player: ')
@@ -77,15 +78,14 @@ class Host(Game):
         self.player = chosen_player
 
     def prepare_game(self):
-        self.table = Table(self.NUMBER_OF_PAWNS, self.color.return_colors())
 
         if self.player == 'human':
+            self.table = Table(self.NUMBER_OF_PAWNS, self.color.return_colors())
             self.table.select_random_pawns_colors()
 
             if self.show_pawns:
                 self.table.print_pawns()
 
-        # TODO trzeba ogarnąć?
         elif self.player == 'computer':
             pass
 
@@ -105,32 +105,69 @@ class Host(Game):
                     break
 
             elif self.player == 'computer':
-                answers_pawns = []
 
-                for iter in range(self.NUMBER_OF_PAWNS):
-                    guessed_color = input(f'{iter + 1}-th color of pawn:')
+                if round_i == 0:
+                    print('You chose the computer to play.')
+                    print('There are 2 strategies, which computer can choose to play:')
+                    print('1. BASIC (faster)')
+                    print('2. ADVANCED (optimal strategy using entropy, but it is slower)')
+                    strategy = input('Choose strategy: ')
 
-                    while guessed_color not in self.color.return_colors():
-                        guessed_color = input('There isn\'t that color in game! Choose another: ')
+                    while strategy != '1' and strategy != '2':
+                        strategy = input('Choose strategy: ')
 
-                    answers_pawns.append(guessed_color)
+                if strategy == '1':
+                    answers_pawns = []
 
-                NUMBER_OF_BLACK = int(input('number of blacks: '))
-                NUMBER_OF_WHITE = int(input('number of whites: '))
+                    for iter in range(self.NUMBER_OF_PAWNS):
+                        guessed_color = input(f'{iter + 1}-th color of pawn:')
 
-                self.ComputerPlayer.possible_combinations = self.ComputerPlayer.check_answer(answers_pawns,
-                                                                                             NUMBER_OF_BLACK,
-                                                                                             NUMBER_OF_WHITE)
-                self.ComputerPlayer.entrophy()
+                        while guessed_color not in self.color.return_colors():
+                            guessed_color = input('There isn\'t that color in game! Choose another: ')
 
-                if self.ComputerPlayer.combinations_with_entrophy.sort_values(by='col2', ascending=False).iloc[0][
-                    1] > 0:
-                    print(
-                        f"I suggest you: {self.ComputerPlayer.combinations_with_entrophy.sort_values(by='col2',ascending=False).iloc[0][0]} "
-                        f" with entrophy estimator: {self.ComputerPlayer.combinations_with_entrophy.sort_values(by='col2',ascending=False).iloc[0][1]}")
-                else:
-                    print(f"the answer is: {self.ComputerPlayer.possible_combinations}")
-                    exit()
+                        answers_pawns.append(guessed_color)
+
+                    NUMBER_OF_BLACK = int(input('number of blacks: '))
+                    NUMBER_OF_WHITE = int(input('number of whites: '))
+
+                    self.ComputerPlayer.possible_combinations = self.ComputerPlayer.check_answer(answers_pawns,
+                                                                                                 NUMBER_OF_BLACK,
+                                                                                                 NUMBER_OF_WHITE)
+
+                    if len(self.ComputerPlayer.possible_combinations) > 1:
+                        print(f"I suggest you: {random.choice(self.ComputerPlayer.possible_combinations)} ")
+                    else:
+                        print(f"the answer is: {self.ComputerPlayer.possible_combinations}")
+                        exit()
+
+                elif strategy == '2':
+
+                    answers_pawns = []
+
+                    for iter in range(self.NUMBER_OF_PAWNS):
+                        guessed_color = input(f'{iter + 1}-th color of pawn:')
+
+                        while guessed_color not in self.color.return_colors():
+                            guessed_color = input('There isn\'t that color in game! Choose another: ')
+
+                        answers_pawns.append(guessed_color)
+
+                    NUMBER_OF_BLACK = int(input('number of blacks: '))
+                    NUMBER_OF_WHITE = int(input('number of whites: '))
+
+                    self.ComputerPlayer.possible_combinations = self.ComputerPlayer.check_answer(answers_pawns,
+                                                                                                 NUMBER_OF_BLACK,
+                                                                                                 NUMBER_OF_WHITE)
+                    self.ComputerPlayer.entrophy()
+
+                    if self.ComputerPlayer.combinations_with_entrophy.sort_values(by='col2', ascending=False).iloc[0][
+                        1] > 0:
+                        print(
+                            f"I suggest you: {self.ComputerPlayer.combinations_with_entrophy.sort_values(by='col2',ascending=False).iloc[0][0]} "
+                            f" with entrophy estimator: {self.ComputerPlayer.combinations_with_entrophy.sort_values(by='col2',ascending=False).iloc[0][1]}")
+                    else:
+                        print(f"the answer is: {self.ComputerPlayer.possible_combinations}")
+                        exit()
 
     def init_computer_player(self):
         self.ComputerPlayer = ComputerPlayer(self.NUMBER_OF_PAWNS, self.color.colors_list)
