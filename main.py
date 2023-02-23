@@ -1,7 +1,7 @@
 from utils import Host
 
 if __name__ == '__main__':
-    print('Yo!\nWelcome to MasterMind game.')
+    print('Yo!\nWelcome to my MasterMind game.')
 
     host = Host()
     host.choose_color()

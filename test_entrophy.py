@@ -5,9 +5,6 @@ import pandas as pd
 
 x = [1, 2, 3, 4, 5, 6, 7, 8]
 
-
-
-
 def check_answer(possible_combinations, guessed_combination, answer_black, answer_white, possible_numbers):
     correct_combinations = []
 
@@ -55,8 +52,6 @@ def entrophy(possible_pawns_combinations, number_of_pawns, all_possible_combinat
     comb = itertools.combinations_with_replacement(possible_answers, number_of_pawns)
     comb = list(comb)
     possible_answers_combinations = comb[2:]
-
-    entrophy_list = []
 
     for iter, possible_pawn_i_combination in enumerate(all_possible_combinations):
         possible_pawn_i_combination = list(possible_pawn_i_combination)

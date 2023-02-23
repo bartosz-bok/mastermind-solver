@@ -1,7 +1,10 @@
 from pawns import Table, Color
 
 import numpy as np
+import pandas as pd
 import itertools
+import math
+
 
 def is_number(string):
     return all(char.isdigit() for char in string)
@@ -102,17 +105,35 @@ class Host(Game):
                     break
 
             elif self.player == 'computer':
-                self.ComputerPlayer.print_all_possibilities()
-                looking_pawns = []
+                answers_pawns = []
 
+                for iter in range(self.NUMBER_OF_PAWNS):
+                    guessed_color = input(f'{iter + 1}-th color of pawn:')
 
+                    while guessed_color not in self.color.return_colors():
+                        guessed_color = input('There isn\'t that color in game! Choose another: ')
 
+                    answers_pawns.append(guessed_color)
 
+                NUMBER_OF_BLACK = int(input('number of blacks: '))
+                NUMBER_OF_WHITE = int(input('number of whites: '))
 
+                self.ComputerPlayer.possible_combinations = self.ComputerPlayer.check_answer(answers_pawns,
+                                                                                             NUMBER_OF_BLACK,
+                                                                                             NUMBER_OF_WHITE)
+                self.ComputerPlayer.entrophy()
+
+                if self.ComputerPlayer.combinations_with_entrophy.sort_values(by='col2', ascending=False).iloc[0][
+                    1] > 0:
+                    print(
+                        f"I suggest you: {self.ComputerPlayer.combinations_with_entrophy.sort_values(by='col2',ascending=False).iloc[0][0]} "
+                        f" with entrophy estimator: {self.ComputerPlayer.combinations_with_entrophy.sort_values(by='col2',ascending=False).iloc[0][1]}")
+                else:
+                    print(f"the answer is: {self.ComputerPlayer.possible_combinations}")
+                    exit()
 
     def init_computer_player(self):
         self.ComputerPlayer = ComputerPlayer(self.NUMBER_OF_PAWNS, self.color.colors_list)
-
 
 
 class HumanPlayer:
@@ -138,32 +159,84 @@ class HumanPlayer:
 
 class ComputerPlayer:
     def __init__(self, number_of_pawns, colors):
-        self.history_of_guesses = None
-        self.history_of_answers = None
         self.number_of_pawns = number_of_pawns
         self.colors = colors
-        self.initial_possibilities = [p for p in itertools.product(self.colors, repeat=self.number_of_pawns)]
-        self.existing_possibilities = self.initial_possibilities
+        self.all_combinations = [p for p in itertools.product(self.colors, repeat=self.number_of_pawns)]
+        self.possible_combinations = self.all_combinations
+        self.combinations_with_entrophy = None
+
+        possible_answers = ['black', 'white', None]
+        comb = list(itertools.combinations_with_replacement(possible_answers, self.number_of_pawns))
+        self.possible_answers_combinations = comb[2:]
 
     def print_initial_possibilities(self):
-        print(self.initial_possibilities)
+        print(self.all_combinations)
 
-    def print_all_possibilities(self):
-        print(self.existing_possibilities)
+    def print_all_existing_possibilities(self):
+        print(self.possible_combinations)
 
+    def check_answer(self, guessed_combination, answer_black, answer_white):
+        correct_combinations = []
 
-    def count_entrophy(self):
-        possible_answers = ['black','white',None]
+        for combination_i in self.possible_combinations:
+            combination_i = list(combination_i)
+            count_black = 0
+            count_white = 0
 
-        combinated_possible_answers = [p for p in itertools.product(possible_answers, repeat=self.number_of_pawns)]
+            for idx, value_i in enumerate(combination_i):
+                if value_i == guessed_combination[idx]:
+                    count_black += 1
 
-        for existing_possibility_i in self.existing_possibilities:
-            for combinated_possible_answer_i in combinated_possible_answers:
+            if count_black == answer_black:
+                indexes = []
 
+                for idx, value_i in enumerate(combination_i):
+                    if value_i == guessed_combination[idx]:
+                        indexes.append(idx)
 
-    def is_correct(self,possible,previous_answer, new_answer):
+                guessed_combinations_copy = guessed_combination.copy()
+                combination_i_copy = combination_i.copy()
 
+                pops = 0
+                for index_i in indexes:
+                    combination_i_copy.pop(index_i - pops)
+                    guessed_combinations_copy.pop(index_i - pops)
+                    pops += 1
 
+                for possible_number_i in self.colors:
+                    count_white += min(guessed_combinations_copy.count(possible_number_i),
+                                       combination_i_copy.count(possible_number_i))
 
-    def update_possibilities(self, answers):
-        pass
+                if count_white == answer_white:
+                    correct_combinations.append(combination_i)
+
+        return correct_combinations
+
+    def entrophy(self):
+        combinations_with_entrophy = pd.DataFrame()
+
+        for iter, possible_pawn_i_combination in enumerate(self.all_combinations):
+            possible_pawn_i_combination = list(possible_pawn_i_combination)
+
+            sum_entrophy = 0
+            for possible_answers_combination_i in self.possible_answers_combinations:
+                possible_answers_combination_i = list(possible_answers_combination_i)
+                NUMBER_OF_BLACK = possible_answers_combination_i.count('black')
+                NUMBER_OF_WHITE = possible_answers_combination_i.count('white')
+
+                combination = self.check_answer(possible_pawn_i_combination, NUMBER_OF_BLACK, NUMBER_OF_WHITE)
+                p = len(combination) / len(self.possible_combinations)
+                if 0 < p < 1:
+                    sum_entrophy += self.count_entrophy(p)
+
+            d = {'col1': [possible_pawn_i_combination], 'col2': sum_entrophy}
+            df = pd.DataFrame(data=d)
+
+            print(f'{iter + 1}/{len(self.all_combinations)}')
+            combinations_with_entrophy = pd.concat([combinations_with_entrophy, df])
+
+        self.combinations_with_entrophy = combinations_with_entrophy
+
+    @staticmethod
+    def count_entrophy(p):
+        return p * math.log2(1 / p)
