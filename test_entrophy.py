@@ -7,17 +7,6 @@ x = [1, 2, 3, 4, 5, 6, 7, 8]
 
 
 
-# print(all_possible_combinations)
-
-previous_guessed_combination = [1, 2, 3, 4]
-
-answer = ['white', None, None, None]
-
-NUMBER_OF_BLACK = answer.count('black')
-NUMBER_OF_WHITE = answer.count('white')
-
-
-
 
 def check_answer(possible_combinations, guessed_combination, answer_black, answer_white, possible_numbers):
     correct_combinations = []
@@ -58,38 +47,42 @@ def check_answer(possible_combinations, guessed_combination, answer_black, answe
 
 
 
-def entrophy(possible_pawns_combinations, number_of_pawns):
+def entrophy(possible_pawns_combinations, number_of_pawns, all_possible_combinations):
     combinations_with_entrophy = pd.DataFrame()
     possible_answers = ['black', 'white', None]
-    possible_answers_combinations = [p for p in itertools.product(possible_answers, repeat=number_of_pawns)]
+    # possible_answers_combinations = [p for p in itertools.product(possible_answers, repeat=number_of_pawns)]
 
+    comb = itertools.combinations_with_replacement(possible_answers, number_of_pawns)
+    comb = list(comb)
+    possible_answers_combinations = comb[2:]
 
-    for possible_pawn_combination_i in possible_pawns_combinations:
+    entrophy_list = []
+
+    for iter, possible_pawn_i_combination in enumerate(all_possible_combinations):
+        possible_pawn_i_combination = list(possible_pawn_i_combination)
 
         sum_entrophy = 0
         for possible_answers_combination_i in possible_answers_combinations:
+            possible_answers_combination_i = list(possible_answers_combination_i)
             NUMBER_OF_BLACK = possible_answers_combination_i.count('black')
             NUMBER_OF_WHITE = possible_answers_combination_i.count('white')
 
 
-            combination = check_answer(possible_pawns_combinations, possible_pawn_combination_i, NUMBER_OF_BLACK, NUMBER_OF_WHITE, x)
+            combination = check_answer(possible_pawns_combinations, possible_pawn_i_combination, NUMBER_OF_BLACK, NUMBER_OF_WHITE, x)
             p = len(combination)/len(possible_pawns_combinations)
-            sum_entrophy += count_entrophy(p)
-        df = pd.DataFrame([possible_pawn_combination_i,sum_entrophy])
+            if p >0 and p<1:
+                sum_entrophy += count_entrophy(p)
+
+        d = {'col1': [possible_pawn_i_combination], 'col2': sum_entrophy}
+        df = pd.DataFrame(data=d)
+        if (iter+1)%100==0:
+            print(f'{iter+1}/{len(all_possible_combinations)}')
         combinations_with_entrophy = pd.concat([combinations_with_entrophy,df])
 
     return combinations_with_entrophy
 
 def count_entrophy(p):
     return p*math.log2(1/p)
-
-
-# answer1 = check_answer(all_possible_combinations, previous_guessed_combination, NUMBER_OF_BLACK, NUMBER_OF_WHITE, x)
-#
-# print(answer1)
-#
-# print(len(answer1)/len(all_possible_combinations))
-
 
 n = int(input('ile pionkow:'))
 
@@ -98,20 +91,21 @@ correct_combinations = all_possible_combinations
 
 while True:
 
-    answers_pawns, answers_color = [], []
+    answers_pawns = []
 
     for iter in range(n):
         answers_pawns.append(int(input(f'{iter + 1}-ta odpowiedz (pionek):')))
-
 
     NUMBER_OF_BLACK = int(input('liczba czarnych: '))
     NUMBER_OF_WHITE = int(input('liczba białych: '))
 
     correct_combinations = check_answer(correct_combinations, answers_pawns, NUMBER_OF_BLACK, NUMBER_OF_WHITE, x)
 
-    print('możliwe opcje:')
-    print(correct_combinations)
-    print('ja proponuję: ')
-    print(random.choice(correct_combinations))
+    combinations_with_entrophy = entrophy(correct_combinations, n, all_possible_combinations)
 
-    print('siema')
+
+    if combinations_with_entrophy.sort_values(by='col2',ascending = False).iloc[0][1] > 0:
+        print(f"proponuję: {combinations_with_entrophy.sort_values(by='col2',ascending = False).iloc[0]}")
+    else:
+        print(f"ostateczna odpowiedź to: {correct_combinations}")
+
